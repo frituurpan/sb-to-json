@@ -20,13 +20,24 @@ const start = async () => {
     version: 'draft',
     resolve_relations: 'kavels'
   }).catch((e) => console.log(e))
-
-
   const kavels = response.data.rels
-  kavels.sort((a, b) => a.position - b.position)
-  kavels.reverse()
+
+  const sorted = await Storyblok.get('cdn/stories/home', {
+    version: 'draft',
+  }).catch((e) => console.log(e))
+
+  const sortedKavels = sorted.data.story.content.kavels
+
+  kavels.sort((a, b) =>  {
+    const posA = sortedKavels.findIndex(element => a.uuid === element)
+    const posB = sortedKavels.findIndex(element => b.uuid === element)
+    
+    return posA - posB
+  })
 
   const mapped = kavels.map((story, index) => {
+
+    console.log(index + ': ' + story.position + ' ' + story.uuid + ' ' + story.name)
 
     const afbeeldingen = []
     story.content.afbeeldingen.forEach(afbeelding => {
@@ -43,7 +54,6 @@ const start = async () => {
 
         if (fileType.ext) {
           const outputFileName = `../../maljaars/public/images/${fileWithoutExt}.${fileType.ext}`
-          console.log(`write ${outputFileName}`)
           fs.createWriteStream(outputFileName).write(buffer);
         } else {
           console.log('File type could not be reliably determined! The binary data may be malformed! No file saved!')
